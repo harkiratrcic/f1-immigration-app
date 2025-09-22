@@ -8,7 +8,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install dependencies
-RUN npm install --legacy-peer-deps
+RUN npm install --legacy-peer-deps --force
 
 # Copy source code
 COPY . .
@@ -20,7 +20,7 @@ RUN npx prisma generate
 RUN npm run build
 
 # Expose port
-EXPOSE 3000
+EXPOSE ${PORT:-3000}
 
 # Start the application
 CMD ["npm", "run", "start:railway"]
