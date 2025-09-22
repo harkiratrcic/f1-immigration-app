@@ -22,6 +22,15 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Enhanced logging middleware
+app.use((req, res, next) => {
+  console.log(`🔍 ${new Date().toISOString()} - ${req.method} ${req.path}`);
+  if (req.body && Object.keys(req.body).length > 0) {
+    console.log('📦 Request Body:', JSON.stringify(req.body, null, 2));
+  }
+  next();
+});
+
 // Serve static files from dist directory
 app.use(express.static(path.join(__dirname, '../dist')));
 
@@ -31,12 +40,27 @@ app.use('/api/forms', formRoutes);
 app.use('/api/invites', inviteRoutes);
 
 // Health check
-app.get('/api/health', (req, res) => {
-  res.json({
-    status: 'ok',
-    message: 'F1 Immigration Inc. server is running',
-    environment: process.env.NODE_ENV || 'production'
-  });
+app.get('/api/health', async (req, res) => {
+  try {
+    // Test database connection
+    await prisma.$queryRaw`SELECT 1 as test`;
+    res.json({
+      status: 'ok',
+      message: 'F1 Immigration Inc. server is running',
+      environment: process.env.NODE_ENV || 'production',
+      database: 'connected',
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Health check failed:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Server health check failed',
+      database: 'disconnected',
+      error: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
 });
 
 // Serve React app for all other routes

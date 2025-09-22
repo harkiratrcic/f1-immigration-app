@@ -76,7 +76,9 @@ export default function Clients() {
 
   const handleCreateClient = async (data: Record<string, any>) => {
     try {
-      await api.createClient(data)
+      console.log('🎯 Creating client with data:', data);
+      const result = await api.createClient(data)
+      console.log('✅ Client creation successful:', result);
       toast({
         title: "Success",
         description: "Client created successfully"
@@ -84,9 +86,11 @@ export default function Clients() {
       setIsCreateDialogOpen(false)
       fetchClients()
     } catch (error) {
+      console.error('❌ Client creation failed:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       toast({
         title: "Error",
-        description: "Failed to create client",
+        description: `Failed to create client: ${errorMessage}`,
         variant: "destructive"
       })
     }

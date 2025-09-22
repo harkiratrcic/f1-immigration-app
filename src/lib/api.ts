@@ -4,6 +4,10 @@ const API_URL = import.meta.env.VITE_API_URL || (
     : 'http://localhost:3001/api'  // Development: use full URL
 );
 
+console.log('🌐 API_URL configured as:', API_URL);
+console.log('🏗️ Environment - PROD:', import.meta.env.PROD);
+console.log('🔧 Environment - VITE_API_URL:', import.meta.env.VITE_API_URL);
+
 class ApiService {
   private async request(endpoint: string, options: RequestInit = {}) {
     const url = `${API_URL}${endpoint}`;
@@ -16,13 +20,29 @@ class ApiService {
       },
     };
 
-    const response = await fetch(url, config);
-
-    if (!response.ok) {
-      throw new Error(`API Error: ${response.statusText}`);
+    console.log(`🔍 API Request: ${options.method || 'GET'} ${url}`);
+    if (options.body) {
+      console.log('📦 Request Body:', options.body);
     }
 
-    return response.json();
+    try {
+      const response = await fetch(url, config);
+
+      console.log(`📡 Response Status: ${response.status} ${response.statusText}`);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`❌ API Error Response:`, errorText);
+        throw new Error(`API Error: ${response.status} ${response.statusText} - ${errorText}`);
+      }
+
+      const data = await response.json();
+      console.log('✅ Response Data:', data);
+      return data;
+    } catch (error) {
+      console.error(`💥 Network/Fetch Error:`, error);
+      throw error;
+    }
   }
 
   // Client APIs
