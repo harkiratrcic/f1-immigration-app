@@ -4,6 +4,9 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AppLayout } from "./components/layout/app-layout";
+import { AuthProvider } from "./contexts/AuthContext";
+import { ProtectedRoute } from "./components/ProtectedRoute";
+import Login from "./pages/Login";
 import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
 import Clients from "./pages/Clients";
@@ -23,50 +26,67 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={
-            <AppLayout>
-              <Dashboard />
-            </AppLayout>
-          } />
-          <Route path="/clients" element={
-            <AppLayout>
-              <Clients />
-            </AppLayout>
-          } />
-          <Route path="/clients/:clientId" element={
-            <AppLayout>
-              <ClientDetail />
-            </AppLayout>
-          } />
-          <Route path="/admin/clients" element={
-            <AppLayout>
-              <AdminClients />
-            </AppLayout>
-          } />
-          <Route path="/admin/responses/:clientId" element={
-            <AppLayout>
-              <AdminResponses />
-            </AppLayout>
-          } />
-          <Route path="/form/:token" element={<FormFill />} />
-          <Route path="/files" element={
-            <AppLayout>
-              <div className="p-6">
-                <h1 className="text-3xl font-bold">Files</h1>
-                <p className="text-muted-foreground mt-2">Immigration files coming soon...</p>
-              </div>
-            </AppLayout>
-          } />
-          <Route path="/settings" element={
-            <AppLayout>
-              <Settings />
-            </AppLayout>
-          } />
-          <Route path="/invite-demo" element={<InviteFlow />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <AuthProvider>
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/form/:token" element={<FormFill />} />
+            <Route path="/invite-demo" element={<InviteFlow />} />
+            <Route path="/" element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <Dashboard />
+                </AppLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/clients" element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <Clients />
+                </AppLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/clients/:clientId" element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <ClientDetail />
+                </AppLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/clients" element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <AdminClients />
+                </AppLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/responses/:clientId" element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <AdminResponses />
+                </AppLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/files" element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <div className="p-6">
+                    <h1 className="text-3xl font-bold">Files</h1>
+                    <p className="text-muted-foreground mt-2">Immigration files coming soon...</p>
+                  </div>
+                </AppLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/settings" element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <Settings />
+                </AppLayout>
+              </ProtectedRoute>
+            } />
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

@@ -8,9 +8,6 @@ const prisma = new PrismaClient();
 router.get('/', async (req, res) => {
   try {
     const clients = await prisma.client.findMany({
-      include: {
-        files: true
-      },
       orderBy: {
         created_at: 'desc'
       }
@@ -27,19 +24,7 @@ router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const client = await prisma.client.findUnique({
-      where: { id },
-      include: {
-        files: {
-          include: {
-            form_instances: {
-              include: {
-                invites: true,
-                answers: true
-              }
-            }
-          }
-        }
-      }
+      where: { id }
     });
 
     if (!client) {
@@ -56,15 +41,17 @@ router.get('/:id', async (req, res) => {
 // Create new client
 router.post('/', async (req, res) => {
   try {
-    const { full_name, primary_email, phone_number, current_country, notes } = req.body;
+    const { first_name, last_name, email, phone, country, notes, uci } = req.body;
 
     const client = await prisma.client.create({
       data: {
-        full_name,
-        primary_email,
-        phone_number,
-        current_country,
-        notes
+        first_name,
+        last_name,
+        email,
+        phone,
+        country,
+        notes,
+        uci
       }
     });
 
@@ -79,15 +66,16 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { full_name, primary_email, phone_number, current_country, notes, uci } = req.body;
+    const { first_name, last_name, email, phone, country, notes, uci } = req.body;
 
     const client = await prisma.client.update({
       where: { id },
       data: {
-        full_name,
-        primary_email,
-        phone_number,
-        current_country,
+        first_name,
+        last_name,
+        email,
+        phone,
+        country,
         notes,
         uci
       }
@@ -122,45 +110,16 @@ router.get('/:id/responses', async (req, res) => {
     const { id } = req.params;
 
     const client = await prisma.client.findUnique({
-      where: { id },
-      include: {
-        files: {
-          include: {
-            form_instances: {
-              include: {
-                template: true,
-                answers: true,
-                invites: true
-              }
-            }
-          }
-        }
-      }
+      where: { id }
     });
 
     if (!client) {
       return res.status(404).json({ error: 'Client not found' });
     }
 
-    // Extract and format responses
-    const responses = [];
-    client.files.forEach(file => {
-      file.form_instances.forEach(instance => {
-        responses.push({
-          id: instance.id,
-          fileId: file.id,
-          fileType: file.type,
-          formTemplate: instance.template,
-          status: instance.status,
-          answers: instance.answers,
-          invites: instance.invites,
-          createdAt: instance.created_at,
-          updatedAt: instance.updated_at
-        });
-      });
-    });
-
-    res.json(responses);
+    // For now, return empty responses array
+    // This will be implemented when form system is complete
+    res.json([]);
   } catch (error) {
     console.error('Error fetching client responses:', error);
     res.status(500).json({ error: 'Failed to fetch client responses' });

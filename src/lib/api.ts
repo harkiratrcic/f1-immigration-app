@@ -1,4 +1,8 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL || (
+  import.meta.env.PROD
+    ? '/api'  // Production: use relative URL
+    : 'http://localhost:3001/api'  // Development: use full URL
+);
 
 class ApiService {
   private async request(endpoint: string, options: RequestInit = {}) {

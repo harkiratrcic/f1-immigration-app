@@ -11,8 +11,15 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { SidebarTrigger } from "@/components/ui/sidebar"
+import { useAuth } from "@/contexts/AuthContext"
 
 export function Header() {
+  const { user, signOut } = useAuth()
+
+  const handleSignOut = async () => {
+    await signOut()
+  }
+
   return (
     <header className="h-16 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
       <div className="flex h-full items-center justify-between px-6">
@@ -52,9 +59,9 @@ export function Header() {
             <DropdownMenuContent className="w-56" align="end" forceMount>
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">John Doe</p>
+                  <p className="text-sm font-medium leading-none">{user?.name || 'User'}</p>
                   <p className="text-xs leading-none text-muted-foreground">
-                    john@f1immigration.com
+                    {user?.email || 'user@f1immigration.com'}
                   </p>
                 </div>
               </DropdownMenuLabel>
@@ -67,7 +74,7 @@ export function Header() {
                 Settings
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-destructive">
+              <DropdownMenuItem className="text-destructive" onClick={handleSignOut}>
                 Sign out
               </DropdownMenuItem>
             </DropdownMenuContent>

@@ -35,12 +35,13 @@ enum Role {
 model Client {
   id              String    @id @default(cuid())
   uci             String?   // Unique Client Identifier from IRCC
-  full_name       String
-  date_of_birth   DateTime?
-  primary_email   String
-  phone_number    String?   // Primary phone number
-  current_country String?
+  first_name      String
+  last_name       String
+  email           String    @unique
+  phone           String?   // Primary phone number
+  country         String?
   notes           String?
+  status          String    @default("active")
   created_at      DateTime  @default(now())
   updated_at      DateTime  @updatedAt
 
