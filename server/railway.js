@@ -15,6 +15,22 @@ const __dirname = path.dirname(__filename);
 dotenv.config();
 
 const app = express();
+
+// Configure DATABASE_URL for Railway
+if (!process.env.DATABASE_URL && process.env.PGHOST) {
+  // Railway PostgreSQL environment variables
+  const pgHost = process.env.PGHOST;
+  const pgPort = process.env.PGPORT || 5432;
+  const pgUser = process.env.PGUSER;
+  const pgPassword = process.env.PGPASSWORD;
+  const pgDatabase = process.env.PGDATABASE;
+
+  process.env.DATABASE_URL = `postgresql://${pgUser}:${pgPassword}@${pgHost}:${pgPort}/${pgDatabase}`;
+  console.log('🔧 Configured DATABASE_URL from Railway PostgreSQL variables');
+}
+
+console.log('🌐 DATABASE_URL configured:', process.env.DATABASE_URL ? 'YES' : 'NO');
+
 const prisma = new PrismaClient();
 
 // Middleware
@@ -77,6 +93,11 @@ app.use((err, req, res, next) => {
 // Database connection and setup
 async function setupDatabase() {
   try {
+    if (!process.env.DATABASE_URL) {
+      console.error('❌ DATABASE_URL not configured. Cannot connect to database.');
+      return;
+    }
+
     await prisma.$connect();
     console.log('✅ Database connected successfully');
 
