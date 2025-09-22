@@ -1,0 +1,47 @@
+{
+  "code": "WP",
+  "title": "Work Permit – Client Intake",
+  "description": "Collects information required for work permit applications.",
+  "sections": [
+    {
+      "id": "applicant",
+      "title": "Applicant Information",
+      "questions": [
+        {"key": "full_name", "label": "Full legal name", "type": "text", "required": true},
+        {"key": "dob", "label": "Date of birth", "type": "date", "required": true},
+        {"key": "uci", "label": "UCI (if known)", "type": "text"},
+        {"key": "passport_number", "label": "Passport number", "type": "text", "required": true},
+        {"key": "passport_expiry", "label": "Passport expiry", "type": "date", "required": true},
+        {"key": "citizenship", "label": "Country of citizenship", "type": "country", "required": true}
+      ]
+    },
+    {
+      "id": "employment",
+      "title": "Employment Details",
+      "questions": [
+        {"key": "current_employer", "label": "Current employer", "type": "text"},
+        {"key": "occupation", "label": "Occupation / Job title", "type": "text"},
+        {"key": "start_date", "label": "Start date", "type": "date"},
+        {"key": "wage", "label": "Wage (hourly)", "type": "text"},
+        {"key": "hours_per_week", "label": "Hours per week", "type": "text"},
+        {"key": "lmia_number", "label": "LMIA number (if applicable)", "type": "text"}
+      ]
+    },
+    {
+      "id": "background",
+      "title": "Background Questions",
+      "questions": [
+        {"key": "refusals", "label": "Have you ever been refused a visa or permit?", "type": "radio", "options": ["Yes","No"], "required": true},
+        {"key": "refusal_details", "label": "If yes, provide details", "type": "textarea", "conditional": {"when": "refusals", "eq": "Yes"}}
+      ]
+    },
+    {
+      "id": "documents",
+      "title": "Documents",
+      "questions": [
+        {"key": "passport_scan", "label": "Passport bio page", "type": "file", "required": true},
+        {"key": "work_history_docs", "label": "Work history docs (CV, refs)", "type": "file"}
+      ]
+    }
+  ]
+}

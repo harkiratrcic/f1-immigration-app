@@ -1,0 +1,57 @@
+{
+  "code": "SV",
+  "title": "Super Visa / Visitor Visa – Client Intake",
+  "description": "Collects information for super visa and visitor visa applications.",
+  "sections": [
+    {
+      "id": "applicant",
+      "title": "Applicant Information",
+      "questions": [
+        {"key": "full_name", "label": "Full legal name", "type": "text", "required": true},
+        {"key": "dob", "label": "Date of birth", "type": "date", "required": true},
+        {"key": "uci", "label": "UCI (if known)", "type": "text"},
+        {"key": "passport_number", "label": "Passport number", "type": "text", "required": true},
+        {"key": "citizenship", "label": "Country of citizenship", "type": "country", "required": true},
+        {"key": "purpose_of_visit", "label": "Purpose of visit", "type": "select", "options": ["Tourism", "Visit family", "Business", "Other"], "required": true}
+      ]
+    },
+    {
+      "id": "travel_history",
+      "title": "Travel History",
+      "questions": [
+        {"key": "prior_visas", "label": "Have you previously applied for or held a Canadian visa?", "type": "radio", "options": ["Yes", "No"], "required": true},
+        {"key": "refusals", "label": "Have you ever been refused a visa or permit to Canada or any other country?", "type": "radio", "options": ["Yes", "No"], "required": true},
+        {"key": "refusal_details", "label": "If yes, provide details", "type": "textarea", "conditional": {"when": "refusals", "eq": "Yes"}}
+      ]
+    },
+    {
+      "id": "host_info",
+      "title": "Host Information (if applicable)",
+      "questions": [
+        {"key": "host_full_name", "label": "Host's full name", "type": "text"},
+        {"key": "host_status", "label": "Host's status in Canada", "type": "select", "options": ["Canadian Citizen", "Permanent Resident", "Work Permit", "Study Permit", "Other"]},
+        {"key": "host_address", "label": "Host's address in Canada", "type": "textarea"},
+        {"key": "relationship", "label": "Relationship to host", "type": "text"},
+        {"key": "invitation_letter", "label": "Invitation letter", "type": "file"}
+      ]
+    },
+    {
+      "id": "super_visa",
+      "title": "Super Visa Specific (if applicable)",
+      "questions": [
+        {"key": "super_visa_intent", "label": "Are you applying for a Super Visa?", "type": "radio", "options": ["Yes", "No"]},
+        {"key": "medical_insurance", "label": "Medical insurance policy", "type": "file", "conditional": {"when": "super_visa_intent", "eq": "Yes"}},
+        {"key": "coverage_amount", "label": "Coverage amount (minimum $100,000 CAD)", "type": "text", "conditional": {"when": "super_visa_intent", "eq": "Yes"}}
+      ]
+    },
+    {
+      "id": "documents",
+      "title": "Documents",
+      "questions": [
+        {"key": "passport_scan", "label": "Passport bio page", "type": "file", "required": true},
+        {"key": "photos", "label": "Passport-style photos", "type": "file", "required": true},
+        {"key": "financial_documents", "label": "Financial support documents", "type": "file"}
+      ]
+    }
+  ]
+}

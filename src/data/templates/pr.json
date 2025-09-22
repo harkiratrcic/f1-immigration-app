@@ -1,0 +1,81 @@
+{
+  "code": "PR",
+  "title": "Permanent Residence – Client Intake",
+  "description": "Comprehensive intake form for permanent residence applications.",
+  "sections": [
+    {
+      "id": "applicant",
+      "title": "Applicant & Family Information",
+      "questions": [
+        {"key": "full_name", "label": "Full legal name", "type": "text", "required": true},
+        {"key": "dob", "label": "Date of birth", "type": "date", "required": true},
+        {"key": "uci", "label": "UCI (if known)", "type": "text"},
+        {"key": "passport_number", "label": "Passport number", "type": "text", "required": true},
+        {"key": "citizenship", "label": "Country of citizenship", "type": "country", "required": true},
+        {"key": "marital_status", "label": "Marital status", "type": "select", "options": ["Single", "Married", "Common-law", "Divorced", "Widowed"], "required": true},
+        {"key": "spouse_name", "label": "Spouse/Partner name", "type": "text", "conditional": {"when": "marital_status", "eq": "Married"}},
+        {"key": "children_count", "label": "Number of dependent children", "type": "text"}
+      ]
+    },
+    {
+      "id": "residency",
+      "title": "Residency & Travel History",
+      "questions": [
+        {"key": "current_country", "label": "Current country of residence", "type": "country", "required": true},
+        {"key": "date_first_entry_canada", "label": "Date of first entry to Canada (if applicable)", "type": "date"},
+        {"key": "current_status_canada", "label": "Current status in Canada", "type": "select", "options": ["Visitor", "Worker", "Student", "Protected Person", "Other", "Never been to Canada"]}
+      ]
+    },
+    {
+      "id": "work_education",
+      "title": "Work & Education History",
+      "questions": [
+        {"key": "highest_education", "label": "Highest level of education", "type": "select", "options": ["High School", "Trade Certificate", "Bachelor's Degree", "Master's Degree", "PhD", "Other"], "required": true},
+        {"key": "eca_completed", "label": "Have you completed an Educational Credential Assessment (ECA)?", "type": "radio", "options": ["Yes", "No", "In Progress"]},
+        {"key": "current_occupation", "label": "Current occupation", "type": "text"},
+        {"key": "noc_code", "label": "NOC code (if known)", "type": "text"},
+        {"key": "years_experience", "label": "Years of work experience", "type": "text"}
+      ]
+    },
+    {
+      "id": "language",
+      "title": "Language Proficiency",
+      "questions": [
+        {"key": "english_test", "label": "English language test completed", "type": "select", "options": ["IELTS", "CELPIP", "None", "Other"]},
+        {"key": "english_scores", "label": "English test scores (Reading, Writing, Listening, Speaking)", "type": "textarea"},
+        {"key": "french_test", "label": "French language test completed", "type": "select", "options": ["TEF", "TCF", "None", "Other"]},
+        {"key": "french_scores", "label": "French test scores", "type": "textarea"}
+      ]
+    },
+    {
+      "id": "program",
+      "title": "Immigration Program",
+      "questions": [
+        {"key": "target_program", "label": "Target immigration program", "type": "select", "options": ["Express Entry (FSW)", "Express Entry (CEC)", "Express Entry (FST)", "Provincial Nominee Program", "Quebec Immigration", "Family Class", "Other"], "required": true},
+        {"key": "pnp_stream", "label": "PNP stream (if applicable)", "type": "text", "conditional": {"when": "target_program", "eq": "Provincial Nominee Program"}},
+        {"key": "proof_of_funds", "label": "Available settlement funds (CAD)", "type": "text"}
+      ]
+    },
+    {
+      "id": "background",
+      "title": "Background & Security",
+      "questions": [
+        {"key": "criminal_history", "label": "Have you ever been convicted of a crime?", "type": "radio", "options": ["Yes", "No"], "required": true},
+        {"key": "medical_issues", "label": "Do you have any serious medical conditions?", "type": "radio", "options": ["Yes", "No"], "required": true},
+        {"key": "immigration_violations", "label": "Have you ever violated immigration laws in any country?", "type": "radio", "options": ["Yes", "No"], "required": true}
+      ]
+    },
+    {
+      "id": "documents",
+      "title": "Documents",
+      "questions": [
+        {"key": "passport_scan", "label": "Passport bio page", "type": "file", "required": true},
+        {"key": "education_docs", "label": "Education documents", "type": "file"},
+        {"key": "work_experience_docs", "label": "Work experience documents", "type": "file"},
+        {"key": "language_test_results", "label": "Language test results", "type": "file"},
+        {"key": "eca_report", "label": "ECA report", "type": "file"},
+        {"key": "proof_of_funds_docs", "label": "Proof of funds documents", "type": "file"}
+      ]
+    }
+  ]
+}
