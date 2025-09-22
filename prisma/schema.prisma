@@ -33,17 +33,17 @@ enum Role {
 
 // Client information
 model Client {
-  id              String    @id @default(cuid())
-  uci             String?   // Unique Client Identifier from IRCC
-  first_name      String
-  last_name       String
-  email           String    @unique
-  phone           String?   // Primary phone number
-  country         String?
-  notes           String?
-  status          String    @default("active")
-  created_at      DateTime  @default(now())
-  updated_at      DateTime  @updatedAt
+  id               String    @id @default(cuid())
+  uci              String?   // Unique Client Identifier from IRCC
+  full_name        String
+  primary_email    String    @unique
+  phone_number     String?   // Primary phone number
+  date_of_birth    DateTime?
+  current_country  String?
+  notes            String?
+  status           String    @default("active")
+  created_at       DateTime  @default(now())
+  updated_at       DateTime  @updatedAt
 
   // Relations
   files File[]

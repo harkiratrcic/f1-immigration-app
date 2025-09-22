@@ -41,24 +41,27 @@ router.get('/:id', async (req, res) => {
 // Create new client
 router.post('/', async (req, res) => {
   try {
-    const { first_name, last_name, email, phone, country, notes, uci } = req.body;
+    const { full_name, primary_email, phone_number, date_of_birth, current_country, notes, uci } = req.body;
+
+    console.log('Creating client with data:', req.body);
 
     const client = await prisma.client.create({
       data: {
-        first_name,
-        last_name,
-        email,
-        phone,
-        country,
+        full_name,
+        primary_email,
+        phone_number,
+        date_of_birth: date_of_birth ? new Date(date_of_birth) : null,
+        current_country,
         notes,
         uci
       }
     });
 
+    console.log('Client created successfully:', client);
     res.status(201).json(client);
   } catch (error) {
     console.error('Error creating client:', error);
-    res.status(500).json({ error: 'Failed to create client' });
+    res.status(500).json({ error: 'Failed to create client', details: error.message });
   }
 });
 
@@ -66,16 +69,16 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { first_name, last_name, email, phone, country, notes, uci } = req.body;
+    const { full_name, primary_email, phone_number, date_of_birth, current_country, notes, uci } = req.body;
 
     const client = await prisma.client.update({
       where: { id },
       data: {
-        first_name,
-        last_name,
-        email,
-        phone,
-        country,
+        full_name,
+        primary_email,
+        phone_number,
+        date_of_birth: date_of_birth ? new Date(date_of_birth) : null,
+        current_country,
         notes,
         uci
       }

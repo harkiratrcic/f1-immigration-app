@@ -62,61 +62,57 @@ async function setupDatabase() {
     // First, try to create the table (will fail if it exists - that's ok)
     try {
       await prisma.$executeRaw`
-        CREATE TABLE IF NOT EXISTS clients (
+        DROP TABLE IF EXISTS clients CASCADE;
+        CREATE TABLE clients (
           id TEXT PRIMARY KEY,
           uci TEXT,
-          first_name TEXT NOT NULL,
-          last_name TEXT NOT NULL,
-          email TEXT UNIQUE NOT NULL,
-          phone TEXT,
-          country TEXT,
+          full_name TEXT NOT NULL,
+          primary_email TEXT UNIQUE NOT NULL,
+          phone_number TEXT,
+          date_of_birth TIMESTAMP WITH TIME ZONE,
+          current_country TEXT,
           notes TEXT,
           status TEXT DEFAULT 'active',
           created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
           updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
         );
       `;
+      console.log('✅ Database table created successfully');
 
-      // Add sample data if no clients exist
-      const existingClients = await prisma.client.findMany();
-      if (existingClients.length === 0) {
-        console.log('📋 Adding sample client data...');
-        await prisma.client.createMany({
-          data: [
-            {
-              id: 'sample-client-1',
-              first_name: 'John',
-              last_name: 'Doe',
-              email: 'john.doe@example.com',
-              phone: '+1-555-0123',
-              country: 'United States',
-              uci: 'UCI123456',
-              notes: 'Sample client for testing'
-            },
-            {
-              id: 'sample-client-2',
-              first_name: 'Maria',
-              last_name: 'Garcia',
-              email: 'maria.garcia@example.com',
-              phone: '+1-555-0124',
-              country: 'Mexico',
-              uci: 'UCI123457',
-              notes: 'Work permit application'
-            },
-            {
-              id: 'sample-client-3',
-              first_name: 'Ahmed',
-              last_name: 'Khan',
-              email: 'ahmed.khan@example.com',
-              phone: '+1-555-0125',
-              country: 'Pakistan',
-              uci: 'UCI123458',
-              notes: 'Permanent residence application'
-            }
-          ]
-        });
-        console.log('✅ Sample data added successfully');
-      }
+      // Add sample data
+      console.log('📋 Adding sample client data...');
+      await prisma.client.createMany({
+        data: [
+          {
+            id: 'sample-client-1',
+            full_name: 'John Doe',
+            primary_email: 'john.doe@example.com',
+            phone_number: '+1-555-0123',
+            current_country: 'United States',
+            uci: 'UCI123456',
+            notes: 'Sample client for testing'
+          },
+          {
+            id: 'sample-client-2',
+            full_name: 'Maria Garcia',
+            primary_email: 'maria.garcia@example.com',
+            phone_number: '+1-555-0124',
+            current_country: 'Mexico',
+            uci: 'UCI123457',
+            notes: 'Work permit application'
+          },
+          {
+            id: 'sample-client-3',
+            full_name: 'Ahmed Khan',
+            primary_email: 'ahmed.khan@example.com',
+            phone_number: '+1-555-0125',
+            current_country: 'Pakistan',
+            uci: 'UCI123458',
+            notes: 'Permanent residence application'
+          }
+        ]
+      });
+      console.log('✅ Sample data added successfully');
 
     } catch (dbError) {
       console.log('🔄 Database setup complete (may have already existed)');
