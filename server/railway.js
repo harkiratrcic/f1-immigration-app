@@ -24,12 +24,40 @@ Object.keys(process.env).filter(key =>
   key.includes('POSTGRES') ||
   key.includes('DB')
 ).forEach(key => {
-  console.log(`${key}:`, process.env[key] ? '[SET]' : '[NOT SET]');
+  const value = process.env[key];
+  console.log(`${key}:`, value ? `[SET] ${value.substring(0, 30)}...` : '[NOT SET]');
 });
 
-// Configure DATABASE_URL for Railway
-if (!process.env.DATABASE_URL) {
-  // Try different Railway environment variable patterns
+// Fix DATABASE_URL if it exists but is malformed
+if (process.env.DATABASE_URL) {
+  console.log('🔍 Original DATABASE_URL:', process.env.DATABASE_URL);
+
+  // Check if DATABASE_URL is malformed (common Railway issue)
+  if (!process.env.DATABASE_URL.startsWith('postgresql://') && !process.env.DATABASE_URL.startsWith('postgres://')) {
+    console.log('🔧 DATABASE_URL is malformed, attempting to fix...');
+
+    // Try to extract components from malformed URL
+    const urlPattern = /(?:.*?:\/\/)?(?:([^:]+):([^@]+)@)?([^:\/]+):?(\d+)?\/(.+)/;
+    const match = process.env.DATABASE_URL.match(urlPattern);
+
+    if (match) {
+      const [, user, password, host, port, database] = match;
+      process.env.DATABASE_URL = `postgresql://${user}:${password}@${host}:${port || 5432}/${database}?sslmode=require`;
+      console.log('✅ Fixed DATABASE_URL format');
+    } else {
+      console.log('❌ Could not parse malformed DATABASE_URL');
+    }
+  }
+
+  // Ensure SSL is enabled for Railway
+  if (!process.env.DATABASE_URL.includes('sslmode')) {
+    process.env.DATABASE_URL += process.env.DATABASE_URL.includes('?') ? '&sslmode=require' : '?sslmode=require';
+    console.log('✅ Added SSL mode to DATABASE_URL');
+  }
+
+  console.log('🔗 Final DATABASE_URL format:', process.env.DATABASE_URL.replace(/:[^:@]*@/, ':****@'));
+} else {
+  // Fallback: Try different Railway environment variable patterns
   const pgHost = process.env.PGHOST || process.env.POSTGRES_HOST;
   const pgPort = process.env.PGPORT || process.env.POSTGRES_PORT || 5432;
   const pgUser = process.env.PGUSER || process.env.POSTGRES_USER;
@@ -37,18 +65,12 @@ if (!process.env.DATABASE_URL) {
   const pgDatabase = process.env.PGDATABASE || process.env.POSTGRES_DB || 'railway';
 
   if (pgHost && pgUser && pgPassword) {
-    // Railway PostgreSQL requires SSL
     process.env.DATABASE_URL = `postgresql://${pgUser}:${pgPassword}@${pgHost}:${pgPort}/${pgDatabase}?sslmode=require`;
     console.log('🔧 Configured DATABASE_URL from Railway PostgreSQL variables with SSL');
     console.log('🔗 DATABASE_URL format:', `postgresql://${pgUser}:*****@${pgHost}:${pgPort}/${pgDatabase}?sslmode=require`);
   } else {
-    console.log('❌ Missing PostgreSQL environment variables:');
-    console.log('PGHOST:', pgHost ? '✅' : '❌');
-    console.log('PGUSER:', pgUser ? '✅' : '❌');
-    console.log('PGPASSWORD:', pgPassword ? '✅' : '❌');
+    console.log('❌ No DATABASE_URL or PostgreSQL environment variables found');
   }
-} else {
-  console.log('✅ DATABASE_URL already provided:', process.env.DATABASE_URL.substring(0, 20) + '...');
 }
 
 console.log('🌐 Final DATABASE_URL configured:', process.env.DATABASE_URL ? 'YES' : 'NO');
