@@ -135,15 +135,43 @@ if (process.env.DATABASE_URL) {
 
 console.log('🌐 Final DATABASE_URL configured:', process.env.DATABASE_URL ? 'YES' : 'NO');
 
-// Initialize Prisma with SSL configuration for Railway
-const prisma = new PrismaClient({
-  datasources: {
-    db: {
-      url: process.env.DATABASE_URL
+// Initialize Prisma ONLY if DATABASE_URL exists
+let prisma = null;
+
+if (process.env.DATABASE_URL) {
+  prisma = new PrismaClient({
+    datasources: {
+      db: {
+        url: process.env.DATABASE_URL
+      }
+    },
+    log: ['query', 'info', 'warn', 'error']
+  });
+} else {
+  console.log('⚠️  WARNING: No database configured. Running without database connection.');
+  console.log('⚠️  To fix this:');
+  console.log('⚠️  1. Add PostgreSQL service in Railway dashboard');
+  console.log('⚠️  2. Connect it to your app service');
+  console.log('⚠️  3. Redeploy your application');
+
+  // Create a mock prisma client that returns errors
+  prisma = {
+    $connect: async () => {
+      throw new Error('No database configured. Please add PostgreSQL to your Railway project.');
+    },
+    $queryRaw: async () => {
+      throw new Error('No database configured. Please add PostgreSQL to your Railway project.');
+    },
+    $executeRaw: async () => {
+      throw new Error('No database configured. Please add PostgreSQL to your Railway project.');
+    },
+    client: {
+      findMany: async () => [],
+      create: async () => { throw new Error('No database configured'); },
+      createMany: async () => { throw new Error('No database configured'); }
     }
-  },
-  log: ['query', 'info', 'warn', 'error']
-});
+  };
+}
 
 // Middleware
 app.use(cors());
@@ -245,6 +273,11 @@ async function setupDatabase() {
   try {
     if (!process.env.DATABASE_URL) {
       console.error('❌ DATABASE_URL not configured. Cannot connect to database.');
+      console.error('❌ Railway PostgreSQL is not connected to this application.');
+      console.error('❌ Please follow these steps:');
+      console.error('❌ 1. Go to Railway dashboard');
+      console.error('❌ 2. Add PostgreSQL service');
+      console.error('❌ 3. Connect it to your app');
       return;
     }
 
