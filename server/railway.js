@@ -36,16 +36,40 @@ if (process.env.DATABASE_URL) {
   if (!process.env.DATABASE_URL.startsWith('postgresql://') && !process.env.DATABASE_URL.startsWith('postgres://')) {
     console.log('🔧 DATABASE_URL is malformed, attempting to fix...');
 
-    // Try to extract components from malformed URL
-    const urlPattern = /(?:.*?:\/\/)?(?:([^:]+):([^@]+)@)?([^:\/]+):?(\d+)?\/(.+)/;
-    const match = process.env.DATABASE_URL.match(urlPattern);
+    // Improved parsing for Railway's specific formats
+    let fixedUrl = null;
 
-    if (match) {
-      const [, user, password, host, port, database] = match;
-      process.env.DATABASE_URL = `postgresql://${user}:${password}@${host}:${port || 5432}/${database}?sslmode=require`;
-      console.log('✅ Fixed DATABASE_URL format');
+    // Try multiple parsing strategies for different Railway formats
+    const strategies = [
+      // Strategy 1: Standard malformed format like "user:pass@host:port/db"
+      /^([^:]+):([^@]+)@([^:\/]+):?(\d+)?\/(.+)$/,
+      // Strategy 2: With protocol prefix like "postgresql://user:pass@host:port/db" but malformed
+      /^(?:.*?:\/\/)?([^:]+):([^@]+)@([^:\/]+):?(\d+)?\/(.+)$/,
+      // Strategy 3: Railway's internal format variations
+      /([^:]+):([^@]+)@([^:\/\s]+):?(\d+)?\/(.+)/
+    ];
+
+    for (const pattern of strategies) {
+      const match = process.env.DATABASE_URL.match(pattern);
+      if (match) {
+        const [, user, password, host, port, database] = match;
+
+        console.log('🔍 Parsed components:', { user, host: host || 'EMPTY', port: port || 'EMPTY', database });
+
+        // Validate extracted components
+        if (user && password && host && host !== '.' && database) {
+          fixedUrl = `postgresql://${user}:${password}@${host}:${port || 5432}/${database}?sslmode=require`;
+          console.log('✅ Fixed DATABASE_URL format using strategy');
+          break;
+        }
+      }
+    }
+
+    if (fixedUrl) {
+      process.env.DATABASE_URL = fixedUrl;
     } else {
-      console.log('❌ Could not parse malformed DATABASE_URL');
+      console.log('❌ Could not parse malformed DATABASE_URL with any strategy');
+      console.log('❌ Raw DATABASE_URL for debugging:', JSON.stringify(process.env.DATABASE_URL));
     }
   }
 
@@ -58,18 +82,54 @@ if (process.env.DATABASE_URL) {
   console.log('🔗 Final DATABASE_URL format:', process.env.DATABASE_URL.replace(/:[^:@]*@/, ':****@'));
 } else {
   // Fallback: Try different Railway environment variable patterns
-  const pgHost = process.env.PGHOST || process.env.POSTGRES_HOST;
-  const pgPort = process.env.PGPORT || process.env.POSTGRES_PORT || 5432;
-  const pgUser = process.env.PGUSER || process.env.POSTGRES_USER;
-  const pgPassword = process.env.PGPASSWORD || process.env.POSTGRES_PASSWORD;
-  const pgDatabase = process.env.PGDATABASE || process.env.POSTGRES_DB || 'railway';
+  console.log('🔄 No DATABASE_URL found, trying individual PostgreSQL variables...');
+
+  // Railway can provide PostgreSQL variables in different formats
+  const pgHost = process.env.PGHOST ||
+                process.env.POSTGRES_HOST ||
+                process.env.RAILWAY_POSTGRES_HOST ||
+                process.env.DB_HOST;
+
+  const pgPort = process.env.PGPORT ||
+                process.env.POSTGRES_PORT ||
+                process.env.RAILWAY_POSTGRES_PORT ||
+                process.env.DB_PORT ||
+                5432;
+
+  const pgUser = process.env.PGUSER ||
+                process.env.POSTGRES_USER ||
+                process.env.RAILWAY_POSTGRES_USER ||
+                process.env.DB_USER ||
+                process.env.DB_USERNAME;
+
+  const pgPassword = process.env.PGPASSWORD ||
+                    process.env.POSTGRES_PASSWORD ||
+                    process.env.RAILWAY_POSTGRES_PASSWORD ||
+                    process.env.DB_PASSWORD ||
+                    process.env.DB_PASS;
+
+  const pgDatabase = process.env.PGDATABASE ||
+                    process.env.POSTGRES_DB ||
+                    process.env.RAILWAY_POSTGRES_DATABASE ||
+                    process.env.DB_NAME ||
+                    process.env.DB_DATABASE ||
+                    'railway';
+
+  console.log('🔍 PostgreSQL variables found:');
+  console.log(`  PGHOST: ${pgHost ? 'SET' : 'NOT SET'}`);
+  console.log(`  PGPORT: ${pgPort}`);
+  console.log(`  PGUSER: ${pgUser ? 'SET' : 'NOT SET'}`);
+  console.log(`  PGPASSWORD: ${pgPassword ? 'SET' : 'NOT SET'}`);
+  console.log(`  PGDATABASE: ${pgDatabase}`);
 
   if (pgHost && pgUser && pgPassword) {
     process.env.DATABASE_URL = `postgresql://${pgUser}:${pgPassword}@${pgHost}:${pgPort}/${pgDatabase}?sslmode=require`;
     console.log('🔧 Configured DATABASE_URL from Railway PostgreSQL variables with SSL');
     console.log('🔗 DATABASE_URL format:', `postgresql://${pgUser}:*****@${pgHost}:${pgPort}/${pgDatabase}?sslmode=require`);
   } else {
-    console.log('❌ No DATABASE_URL or PostgreSQL environment variables found');
+    console.log('❌ Missing required PostgreSQL environment variables');
+    console.log('❌ Required: PGHOST, PGUSER, PGPASSWORD');
+    console.log('❌ Make sure Railway PostgreSQL service is properly connected');
   }
 }
 
@@ -143,13 +203,35 @@ app.get('/api/health', async (req, res) => {
     healthData.error = error.message;
     healthData.errorCode = error.code;
 
+    // Enhanced debugging for Railway issues
+    healthData.debugging = {
+      originalDatabaseUrl: process.env.DATABASE_URL?.substring(0, 50) + '...',
+      hasPostgresVars: !!(process.env.PGHOST || process.env.POSTGRES_HOST),
+      errorDetails: error.stack?.substring(0, 200)
+    };
+
     res.status(500).json(healthData);
   }
 });
 
-// Serve React app for all other routes
-app.get('/*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../dist/index.html'));
+// Serve React app for all other routes (fixed for Express 4.21+ path-to-regexp compatibility)
+app.use((req, res, next) => {
+  // Skip API routes
+  if (req.path.startsWith('/api/')) {
+    return next();
+  }
+
+  // Only handle GET requests for serving the React app
+  if (req.method !== 'GET') {
+    return next();
+  }
+
+  res.sendFile(path.join(__dirname, '../dist/index.html'), (err) => {
+    if (err) {
+      console.error('Error serving index.html:', err);
+      res.status(500).send('Error loading application');
+    }
+  });
 });
 
 // Error handling middleware
