@@ -16,22 +16,52 @@ dotenv.config();
 
 const app = express();
 
-// Configure DATABASE_URL for Railway
-if (!process.env.DATABASE_URL && process.env.PGHOST) {
-  // Railway PostgreSQL environment variables
-  const pgHost = process.env.PGHOST;
-  const pgPort = process.env.PGPORT || 5432;
-  const pgUser = process.env.PGUSER;
-  const pgPassword = process.env.PGPASSWORD;
-  const pgDatabase = process.env.PGDATABASE;
+// Debug all environment variables
+console.log('🔍 ALL ENVIRONMENT VARIABLES:');
+Object.keys(process.env).filter(key =>
+  key.includes('DATABASE') ||
+  key.includes('PG') ||
+  key.includes('POSTGRES') ||
+  key.includes('DB')
+).forEach(key => {
+  console.log(`${key}:`, process.env[key] ? '[SET]' : '[NOT SET]');
+});
 
-  process.env.DATABASE_URL = `postgresql://${pgUser}:${pgPassword}@${pgHost}:${pgPort}/${pgDatabase}`;
-  console.log('🔧 Configured DATABASE_URL from Railway PostgreSQL variables');
+// Configure DATABASE_URL for Railway
+if (!process.env.DATABASE_URL) {
+  // Try different Railway environment variable patterns
+  const pgHost = process.env.PGHOST || process.env.POSTGRES_HOST;
+  const pgPort = process.env.PGPORT || process.env.POSTGRES_PORT || 5432;
+  const pgUser = process.env.PGUSER || process.env.POSTGRES_USER;
+  const pgPassword = process.env.PGPASSWORD || process.env.POSTGRES_PASSWORD;
+  const pgDatabase = process.env.PGDATABASE || process.env.POSTGRES_DB || 'railway';
+
+  if (pgHost && pgUser && pgPassword) {
+    // Railway PostgreSQL requires SSL
+    process.env.DATABASE_URL = `postgresql://${pgUser}:${pgPassword}@${pgHost}:${pgPort}/${pgDatabase}?sslmode=require`;
+    console.log('🔧 Configured DATABASE_URL from Railway PostgreSQL variables with SSL');
+    console.log('🔗 DATABASE_URL format:', `postgresql://${pgUser}:*****@${pgHost}:${pgPort}/${pgDatabase}?sslmode=require`);
+  } else {
+    console.log('❌ Missing PostgreSQL environment variables:');
+    console.log('PGHOST:', pgHost ? '✅' : '❌');
+    console.log('PGUSER:', pgUser ? '✅' : '❌');
+    console.log('PGPASSWORD:', pgPassword ? '✅' : '❌');
+  }
+} else {
+  console.log('✅ DATABASE_URL already provided:', process.env.DATABASE_URL.substring(0, 20) + '...');
 }
 
-console.log('🌐 DATABASE_URL configured:', process.env.DATABASE_URL ? 'YES' : 'NO');
+console.log('🌐 Final DATABASE_URL configured:', process.env.DATABASE_URL ? 'YES' : 'NO');
 
-const prisma = new PrismaClient();
+// Initialize Prisma with SSL configuration for Railway
+const prisma = new PrismaClient({
+  datasources: {
+    db: {
+      url: process.env.DATABASE_URL
+    }
+  },
+  log: ['query', 'info', 'warn', 'error']
+});
 
 // Middleware
 app.use(cors());
@@ -57,25 +87,41 @@ app.use('/api/invites', inviteRoutes);
 
 // Health check
 app.get('/api/health', async (req, res) => {
+  const healthData = {
+    status: 'unknown',
+    message: 'F1 Immigration Inc. server is running',
+    environment: process.env.NODE_ENV || 'production',
+    database: 'unknown',
+    timestamp: new Date().toISOString(),
+    debug: {
+      databaseUrl: process.env.DATABASE_URL ? 'SET' : 'NOT SET',
+      pgHost: process.env.PGHOST ? 'SET' : 'NOT SET',
+      pgUser: process.env.PGUSER ? 'SET' : 'NOT SET',
+      pgPassword: process.env.PGPASSWORD ? 'SET' : 'NOT SET'
+    }
+  };
+
   try {
+    if (!process.env.DATABASE_URL) {
+      throw new Error('DATABASE_URL not configured');
+    }
+
     // Test database connection
-    await prisma.$queryRaw`SELECT 1 as test`;
-    res.json({
-      status: 'ok',
-      message: 'F1 Immigration Inc. server is running',
-      environment: process.env.NODE_ENV || 'production',
-      database: 'connected',
-      timestamp: new Date().toISOString()
-    });
+    const result = await prisma.$queryRaw`SELECT 1 as test`;
+    console.log('✅ Database query successful:', result);
+
+    healthData.status = 'ok';
+    healthData.database = 'connected';
+    res.json(healthData);
   } catch (error) {
-    console.error('Health check failed:', error);
-    res.status(500).json({
-      status: 'error',
-      message: 'Server health check failed',
-      database: 'disconnected',
-      error: error.message,
-      timestamp: new Date().toISOString()
-    });
+    console.error('❌ Health check failed:', error);
+
+    healthData.status = 'error';
+    healthData.database = 'disconnected';
+    healthData.error = error.message;
+    healthData.errorCode = error.code;
+
+    res.status(500).json(healthData);
   }
 });
 
