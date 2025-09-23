@@ -284,67 +284,9 @@ async function setupDatabase() {
     await prisma.$connect();
     console.log('✅ Database connected successfully');
 
-    // Create clients table and sample data
-    console.log('🔄 Setting up database schema...');
-
-    // First, try to create the table (will fail if it exists - that's ok)
-    try {
-      await prisma.$executeRaw`
-        DROP TABLE IF EXISTS clients CASCADE;
-        CREATE TABLE clients (
-          id TEXT PRIMARY KEY,
-          uci TEXT,
-          full_name TEXT NOT NULL,
-          primary_email TEXT UNIQUE NOT NULL,
-          phone_number TEXT,
-          date_of_birth TIMESTAMP WITH TIME ZONE,
-          current_country TEXT,
-          notes TEXT,
-          status TEXT DEFAULT 'active',
-          created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-          updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-        );
-      `;
-      console.log('✅ Database table created successfully');
-
-      // Add sample data
-      console.log('📋 Adding sample client data...');
-      await prisma.client.createMany({
-        data: [
-          {
-            id: 'sample-client-1',
-            full_name: 'John Doe',
-            primary_email: 'john.doe@example.com',
-            phone_number: '+1-555-0123',
-            current_country: 'United States',
-            uci: 'UCI123456',
-            notes: 'Sample client for testing'
-          },
-          {
-            id: 'sample-client-2',
-            full_name: 'Maria Garcia',
-            primary_email: 'maria.garcia@example.com',
-            phone_number: '+1-555-0124',
-            current_country: 'Mexico',
-            uci: 'UCI123457',
-            notes: 'Work permit application'
-          },
-          {
-            id: 'sample-client-3',
-            full_name: 'Ahmed Khan',
-            primary_email: 'ahmed.khan@example.com',
-            phone_number: '+1-555-0125',
-            current_country: 'Pakistan',
-            uci: 'UCI123458',
-            notes: 'Permanent residence application'
-          }
-        ]
-      });
-      console.log('✅ Sample data added successfully');
-
-    } catch (dbError) {
-      console.log('🔄 Database setup complete (may have already existed)');
-    }
+    console.log('🩺 Running database health check...');
+    await prisma.$queryRaw`SELECT 1 as healthy_check`;
+    console.log('✅ Database health check passed. Prisma migrations should manage schema.');
 
   } catch (error) {
     console.error('❌ Database setup failed:', error);
